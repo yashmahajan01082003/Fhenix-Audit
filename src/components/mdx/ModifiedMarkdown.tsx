@@ -430,11 +430,14 @@ export default function ModifiedMarkdown({
           ol: ({ children }: { children?: React.ReactNode }) => (
             <ol className="space-y-3 my-6 pl-0 list-none">
               {React.Children.map(children, (child, idx) => {
-                const childText = childrenToText(
-                  React.isValidElement(child)
+                const childContent =
+                  React.isValidElement<{
+                    children?: React.ReactNode;
+                  }>(child)
                     ? child.props.children
-                    : child
-                ).trim();
+                    : child;
+
+                const childText = childrenToText(childContent).trim();
 
                 if (!childText) return null;
 
@@ -445,9 +448,7 @@ export default function ModifiedMarkdown({
                     </span>
 
                     <span className="flex-1 text-slate-300 text-base leading-7 pt-0.5">
-                      {React.isValidElement(child)
-                        ? child.props.children
-                        : child}
+                      {childContent}
                     </span>
                   </li>
                 );
