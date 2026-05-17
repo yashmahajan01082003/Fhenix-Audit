@@ -49,7 +49,7 @@ export default function Header() {
         <div className="w-px h-5 bg-white/10" />
 
         <Link 
-          href="https://github.com/fhenixnetwork" 
+          href="https://github.com/laurenmxv/Fhenix-Learn" 
           target="_blank" 
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/[0.07] text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/15 transition-all text-sm"
         >

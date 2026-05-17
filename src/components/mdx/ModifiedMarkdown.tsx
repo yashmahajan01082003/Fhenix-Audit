@@ -8,7 +8,7 @@ import rehypeSlug from 'rehype-slug';
 import {
   AlertCircle, CheckCircle2, Copy, Check,
   Folder, FileCode2, ArrowRight, ShieldAlert, Zap,
-  AlertTriangle, XCircle, Info, BookOpen, Target
+  AlertTriangle, XCircle, Info, BookOpen, Target, Code2
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────
@@ -19,7 +19,7 @@ import {
 ───────────────────────────────────────────── */
 function preprocessContent(content: string): string {
   // Match any numbered list that immediately follows a "Key Problems" or "Key Issues" heading line
-  return content.replace(
+  let processed = content.replace(
     /((?:#{1,4}\s+(?:Key\s+Problems?|Key\s+Issues?|Overview|Problems?)[^\n]*)\n)((?:\d+\.\s+\*\*[^\n]+\n?)+)/gim,
     (_match, heading: string, listBlock: string) => {
       const items = [...listBlock.matchAll(/\d+\.\s+\*\*(.+?):\*\*\s*(.+)/g)]
@@ -38,6 +38,24 @@ function preprocessContent(content: string): string {
       return heading + '\n```key-problems\n' + JSON.stringify(items) + '\n```\n\n';
     }
   );
+
+  // Map file paths to code blocks
+  let lastFile = "";
+  const lines = processed.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const fileMatch = lines[i].match(/\*\*(?:Files?|Location|Path):\*\*\s*`?([^`]+)`?/i);
+    if (fileMatch) {
+      lastFile = fileMatch[1].trim();
+    }
+    
+    const codeMatch = lines[i].match(/^```([a-z0-9\-]+)(.*)$/i);
+    if (codeMatch && lastFile && codeMatch[1] !== 'key-problems') {
+      lines[i] = `\`\`\`${codeMatch[1]}__FILE__${encodeURIComponent(lastFile)}`;
+      lastFile = ""; // consume
+    }
+  }
+  
+  return lines.join('\n');
 }
 
 /* ─────────────────────────────────────────────
@@ -129,7 +147,7 @@ const KeyProblemsGrid = ({ rawJson }: { rawJson: string }) => {
 /* ─────────────────────────────────────────────
    macOS TERMINAL
 ───────────────────────────────────────────── */
-const MacTerminal = ({ children, codeClass }: { children: React.ReactNode; codeClass?: string }) => {
+const MacTerminal = ({ children, codeClass, filePath }: { children: React.ReactNode; codeClass?: string; filePath?: string }) => {
   const [copied, setCopied] = useState(false);
   const language = codeClass ? codeClass.replace(/language-/, '') : '';
   const textContent = childrenToText(children);
@@ -162,6 +180,9 @@ const MacTerminal = ({ children, codeClass }: { children: React.ReactNode; codeC
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const repoUrl = "https://github.com/laurenmxv/Fhenix-Learn";
+  const fileUrl = filePath ? `${repoUrl}/tree/main/${filePath}` : repoUrl;
+
   return (
     <div className="relative group my-10 rounded-2xl overflow-hidden shadow-[0_20px_60px_-5px_rgba(0,0,0,0.8)]"
       style={{ background: 'linear-gradient(180deg,#1C1C1E 0%,#1C1C1E 44px,#0A0A0A 44px)' }}
@@ -173,14 +194,35 @@ const MacTerminal = ({ children, codeClass }: { children: React.ReactNode; codeC
           <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]" />
           <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]" />
         </div>
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/5 text-[11px] font-mono text-slate-400 tracking-wider">
-          {language || 'code'}
+        
+        {filePath ? (
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 rounded-md bg-white/5 border border-white/5 max-w-[60%] sm:max-w-[70%]">
+            <span className="text-[11px] font-mono text-slate-400 tracking-wider shrink-0 hidden sm:block">{language || 'code'}</span>
+            <span className="text-slate-600 hidden sm:block">|</span>
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-mono text-brand-cyan hover:text-white truncate transition-colors group/link">
+              <Folder className="w-3 h-3 shrink-0" />
+              <span className="truncate">{filePath}</span>
+            </a>
+          </div>
+        ) : (
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/5 border border-white/5 text-[11px] font-mono text-slate-400 tracking-wider">
+            {language || 'code'}
+          </div>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          {filePath && (
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2.5 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[11px] font-mono text-slate-400 hover:text-white transition-all">
+              <Code2 className="w-3 h-3" />
+              <span className="hidden sm:inline">Source</span>
+            </a>
+          )}
+          <button onClick={handleCopy}
+            className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[11px] font-mono text-slate-400 hover:text-white transition-all"
+          >
+            {copied ? <><Check className="w-3 h-3 text-green-400" />Copied</> : <><Copy className="w-3 h-3" />Copy</>}
+          </button>
         </div>
-        <button onClick={handleCopy}
-          className="ml-auto opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[11px] font-mono text-slate-400 hover:text-white transition-all"
-        >
-          {copied ? <><Check className="w-3 h-3 text-green-400" />Copied</> : <><Copy className="w-3 h-3" />Copy</>}
-        </button>
       </div>
       {/* Code body */}
       <pre className="p-6 overflow-x-auto text-[13px] leading-7 font-mono text-slate-300 m-0 bg-[#0A0A0A]">
@@ -196,24 +238,35 @@ const MacTerminal = ({ children, codeClass }: { children: React.ReactNode; codeC
 const MacBreadcrumb = ({ rawText }: { rawText: string }) => {
   const clean = rawText.replace(/\*\*(Files?|Location|Path):\*\*\s*/i, '').replace(/`/g, '').trim();
   const paths = clean.split(',').map(s => s.trim()).filter(Boolean);
+  const repoUrl = "https://github.com/laurenmxv/Fhenix-Learn";
   return (
-    <div className="my-6 flex flex-col gap-2">
+    <div className="my-6 flex flex-col gap-3">
       {paths.map((path, pi) => {
         const parts = path.split(/[/\\]/);
+        const fileUrl = `${repoUrl}/tree/main/${path}`;
         return (
-          <div key={pi} className="flex flex-wrap items-center gap-1.5 p-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl w-fit max-w-full backdrop-blur">
-            <span className="text-[8px] font-bold uppercase tracking-widest text-slate-600 mr-1 hidden sm:block">PATH</span>
-            {parts.map((seg, i) => (
-              <React.Fragment key={i}>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/30 border border-white/[0.05] rounded-lg">
-                  {i < parts.length - 1
-                    ? <Folder className="w-3.5 h-3.5 text-brand-purple shrink-0" />
-                    : <FileCode2 className="w-3.5 h-3.5 text-brand-cyan shrink-0" />}
-                  <span className="text-[13px] font-mono text-slate-200 leading-none">{seg}</span>
-                </div>
-                {i < parts.length - 1 && <span className="text-slate-700 text-sm">/</span>}
-              </React.Fragment>
-            ))}
+          <div key={pi} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 bg-white/[0.02] border border-white/[0.05] rounded-2xl w-full shadow-lg">
+             <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mr-2">Target File</span>
+                {parts.map((seg, i) => (
+                  <React.Fragment key={i}>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/40 border border-white/[0.05] rounded-xl shadow-inner">
+                      {i < parts.length - 1
+                        ? <Folder className="w-3.5 h-3.5 text-brand-purple shrink-0" />
+                        : <FileCode2 className="w-3.5 h-3.5 text-brand-cyan shrink-0" />}
+                      <span className="text-[13px] font-mono text-slate-200 leading-none">{seg}</span>
+                    </div>
+                    {i < parts.length - 1 && <span className="text-slate-600 text-sm">/</span>}
+                  </React.Fragment>
+                ))}
+             </div>
+             
+             <a href={fileUrl} target="_blank" rel="noopener noreferrer" 
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-brand-cyan/10 hover:bg-brand-cyan/20 border border-brand-cyan/20 text-brand-cyan text-xs font-bold uppercase tracking-wider transition-all group shrink-0">
+                <Code2 className="w-4 h-4" />
+                <span>View Source</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+             </a>
           </div>
         );
       })}
@@ -501,7 +554,7 @@ export default function ModifiedMarkdown({
               ? node.children[0]
               : undefined;
 
-            const codeClass =
+            const rawClass =
               rawNode &&
                 typeof rawNode === "object" &&
                 rawNode !== null
@@ -511,9 +564,20 @@ export default function ModifiedMarkdown({
                   }
                 ).properties?.className?.[0]
                 : undefined;
+                
+            let codeClass = rawClass;
+            let filePath;
+            
+            if (rawClass && rawClass.includes('__FILE__')) {
+              const parts = rawClass.split('__FILE__');
+              codeClass = parts[0];
+              try {
+                filePath = decodeURIComponent(parts[1]);
+              } catch (e) {}
+            }
 
             return (
-              <MacTerminal codeClass={codeClass}>
+              <MacTerminal codeClass={codeClass} filePath={filePath}>
                 {props.children}
               </MacTerminal>
             );

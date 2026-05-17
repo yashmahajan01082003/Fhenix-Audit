@@ -147,16 +147,13 @@ export default function Sidebar({ docs }: { docs: DocMetadata[] }) {
       style={{ background: 'linear-gradient(180deg, rgba(9,10,15,0.96) 0%, rgba(9,10,15,0.92) 100%)', backdropFilter: 'blur(40px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
     >
       {/* Logo */}
-      <Link href="/" className="h-[60px] shrink-0 flex items-center px-5 gap-3 group relative">
+      <Link href="/" className="h-[60px] shrink-0 flex items-center px-6 group relative">
         <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-cyan/20 to-brand-blue/20 border border-brand-cyan/20 flex items-center justify-center shadow-[0_0_15px_rgba(10,217,220,0.15)] group-hover:shadow-[0_0_25px_rgba(10,217,220,0.3)] transition-all">
-          <Sparkles className="w-4 h-4 text-brand-cyan" />
-        </div>
-        <div>
-          <div className="text-sm font-bold font-heading text-white tracking-tight">
-            Fhenix<span className="text-brand-cyan">Audit</span>
-          </div>
-          <div className="text-[10px] text-slate-600 font-mono tracking-wider">v2.0 · Secured</div>
+        <div className="flex items-center text-[22px] font-black tracking-tight font-mono group-hover:scale-[1.02] transition-transform duration-300">
+          <span className="text-slate-700 mr-2.5">(</span>
+          <span className="text-white tracking-widest">fhenix</span>
+          <span className="text-brand-cyan translate-y-[2px] ml-0.5">*</span>
+          <span className="text-slate-700 ml-2.5">)</span>
         </div>
       </Link>
 
