@@ -58,13 +58,28 @@ function getNodeText(node: unknown): string {
   return '';
 }
 
-function childrenToText(children: ReactNode): string {
-  if (typeof children === 'string') return children;
-  if (Array.isArray(children)) return children.map(childrenToText).join('');
-  if (React.isValidElement(children)) return childrenToText((children as ReactElement).props?.children);
-  return String(children ?? '');
-}
+function childrenToText(children: React.ReactNode): string {
+  if (
+    typeof children === "string" ||
+    typeof children === "number"
+  ) {
+    return String(children);
+  }
 
+  if (Array.isArray(children)) {
+    return children.map(childrenToText).join("");
+  }
+
+  if (
+    React.isValidElement<{
+      children?: React.ReactNode;
+    }>(children)
+  ) {
+    return childrenToText(children.props.children);
+  }
+
+  return "";
+}
 /* ─────────────────────────────────────────────
    KEY PROBLEMS CARD GRID
 ───────────────────────────────────────────── */
